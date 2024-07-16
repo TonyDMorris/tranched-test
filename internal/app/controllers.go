@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tonydmorris/tranched/internal/models"
 )
 
 // AuthenticateRequest is a middleware that authenticates a request
@@ -96,7 +97,22 @@ func (a *App) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	order, err := a.createOrder(req, username.(string))
+	user, err := a.getUser(username.(string))
+	if err != nil {
+		c.JSON(500, gin.H{"error": "internal server error"})
+		c.Abort()
+		return
+	}
+
+	order := models.Order{
+		OwnerID:   user.ID,
+		Side:      req.Side,
+		Price:     req.Price,
+		Quantity:  req.Quantity,
+		AssetPair: req.AssetPair,
+	}
+
+	createdOrder, err := a.createOrder(order)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "internal server error"})
 		c.Abort()
@@ -104,8 +120,8 @@ func (a *App) CreateOrder(c *gin.Context) {
 	}
 
 	c.JSON(201, CreateOrderResponse{
-		ID:     order.ID,
-		Status: order.Status,
+		ID:     createdOrder.ID,
+		Status: createdOrder.Status,
 	})
 
 }

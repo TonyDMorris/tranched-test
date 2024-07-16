@@ -22,5 +22,12 @@ func (a *App) createUser(username, password string) (*models.User, error) {
 	}
 	user, err := a.userRepository.CreateUser(username, string(hashedPassword))
 	return &user, err
+}
 
+func (a *App) getUser(username string) (*models.User, error) {
+	user, err := a.userRepository.FindByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

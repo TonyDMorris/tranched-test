@@ -63,3 +63,17 @@ curl --location 'localhost:8080/orders' \
 }'
 
 ```
+
+get bobs orders
+
+```curl
+curl --location 'localhost:8080/orders' \
+--header 'Authorization: Basic Ym9iOmx1Y2t5'
+```
+
+get traceys orders
+
+```curl
+curl --location 'localhost:8080/orders' \
+--header 'Authorization: Basic dHJhY3k6YmVsbG93'
+```

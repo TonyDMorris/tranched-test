@@ -96,3 +96,30 @@ func (r *Repository) FindAssetsByUsername(username string) ([]models.Asset, erro
 
 	return assets, nil
 }
+
+// UpdateAssetByuserID updates an asset by user id
+func (r *Repository) UpdateAssetByUserID(userID, symbol string, amount float64) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+	stmnt, err := tx.Prepare("UPDATE public.assets SET amount = amount + $1 WHERE user_id = $2 AND symbol = $3")
+	if err != nil {
+		return fmt.Errorf("error preparing statement: %w", err)
+	}
+
+	defer stmnt.Close()
+
+	_, err = stmnt.Exec(amount, userID, symbol)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error updating asset: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
+}

@@ -9,20 +9,14 @@ import (
 )
 
 const (
-	OrderStatusPending  = "pending"
-	OrderStatusfilled   = "filled"
-	BuySide             = "buy"
-	SellSide            = "sell"
 	ErrInvalidAssetPair = "invalid asset pair"
 )
 
-var permittedPairs = map[string]bool{
-	"EUR-USD": true,
-}
-
-// ContrivedOrderStorage is a simple in-memory storage for orders
+// contrivedOrderStorage is a simple in-memory storage for orders
 // storage is keyed by Sybol -> Price -> Quantity -> []Order
 type contrivedOrderStorageBySymbolPriceQuantity map[string]map[float64]map[float64][]*models.Order
+
+// contrivedOrderStorageByUserID is a simple in-memory storage for orders
 type contrivedOrderStorageByUserID map[string][]*models.Order
 
 type Repository struct {
@@ -41,37 +35,43 @@ func NewRepository() *Repository {
 	}
 }
 
+// CreateOrder uses contrived in-memory storage to create an order
 func (r *Repository) CreateOrder(order models.Order) (models.Order, error) {
-	_, ok := permittedPairs[order.AssetPair]
+	_, ok := models.PermittedPairs[order.AssetPair]
 	if !ok {
 		return models.Order{}, errors.New(ErrInvalidAssetPair)
 	}
+	// lock the "database"
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	// gen new ID for order
 	order.ID = r.idGen.New()
-	order.Status = OrderStatusPending
+	// set order status to pending
+	order.Status = models.OrderStatusPending
+
+	// instantiate the map if it doesn't exist
 	if _, ok := r.ordersBySymbol[order.AssetPair]; !ok {
 		r.ordersBySymbol[order.AssetPair] = make(map[float64]map[float64][]*models.Order)
 	}
-
+	// instantiate the map if it doesn't exist
 	if _, ok := r.ordersBySymbol[order.AssetPair][order.Price]; !ok {
 		r.ordersBySymbol[order.AssetPair][order.Price] = make(map[float64][]*models.Order)
 	}
-
+	// get the valid orders to match against
 	validOrders := r.ordersBySymbol[order.AssetPair][order.Price][order.Quantity]
-
-	r.ordersBySymbol[order.AssetPair][order.Price][order.Quantity] = append(validOrders, &order)
-
 	for _, matchingOrder := range validOrders {
 		if matchingOrder.Side == opositeSide(order.Side) {
 			// fill the order
-			matchingOrder.Status = OrderStatusfilled
-			order.Status = OrderStatusfilled
+			matchingOrder.Status = models.OrderStatusfilled
+			order.Status = models.OrderStatusfilled
 			matchingOrder.FilledBy = order.OwnerID
 			order.FilledBy = matchingOrder.OwnerID
 		}
 	}
-
+	// append the new order to the list of valid orders
+	r.ordersBySymbol[order.AssetPair][order.Price][order.Quantity] = append(validOrders, &order)
+	// append the new order to the list of orders by user
 	r.ordersByUserID[order.OwnerID] = append(r.ordersByUserID[order.OwnerID], &order)
 
 	return order, nil
@@ -91,8 +91,8 @@ func (r *Repository) FindOrderByOwnerID(ownerID string) ([]models.Order, error) 
 }
 
 func opositeSide(side string) string {
-	if side == BuySide {
-		return SellSide
+	if side == models.BuySide {
+		return models.SellSide
 	}
-	return BuySide
+	return models.BuySide
 }

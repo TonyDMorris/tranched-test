@@ -14,6 +14,7 @@ type UserRepository interface {
 	FindByUsername(username string) (models.User, error)
 	CreateUser(username, passwordHash string) (models.User, error)
 	FindAssetsByUsername(username string) ([]models.Asset, error)
+	UpdateAssetByUserID(userID, symbol string, amount float64) error
 }
 type OrderRepository interface {
 	CreateOrder(order models.Order) (models.Order, error)

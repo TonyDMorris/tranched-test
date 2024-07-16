@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS public.assets (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+ALTER TABLE public.assets ADD CONSTRAINT amount CHECK (amount >= 0);
+
 INSERT INTO public.users (username, password_hash) 
 VALUES (
     'bob',
