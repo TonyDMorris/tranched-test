@@ -26,6 +26,8 @@ run the services with docker-compose from the root of the project
 docker-compose up --build
 ```
 
+follow the user steps below using the curl commands.
+
 check bobs assets
 
 ```curl
