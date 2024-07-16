@@ -20,6 +20,7 @@ type Config struct {
 	PostgresUser     string `env:"POSTGRES_USER,required"`
 	PostgresDB       string `env:"POSTGRES_DB,required"`
 	PostgresPort     int    `env:"POSTGRES_PORT" envDefault:"5432"`
+	Port             int    `env:"PORT" envDefault:"8080"`
 }
 
 func main() {
@@ -54,7 +55,7 @@ func main() {
 
 	api := app.New(userRepo, orderRepo, app.WithLogger(logger))
 
-	err = api.Run()
+	err = api.Run(cfg.Port)
 	if err != nil {
 		log.Fatalf("failed to run api: %v", err)
 	}

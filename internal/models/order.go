@@ -8,4 +8,5 @@ type Order struct {
 	Quantity  float64
 	AssetPair string
 	Status    string
+	FilledBy  string
 }

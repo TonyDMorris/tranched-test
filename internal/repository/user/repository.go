@@ -21,12 +21,19 @@ func NewRepository(db *sql.DB) *Repository {
 
 // FindByUsername retrieves a user by their username
 func (r *Repository) FindByUsername(username string) (models.User, error) {
-	row := r.db.QueryRow("SELECT (id, username, password_hash) FROM users WHERE username = ?", username)
-	var user models.User
-	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash)
+	row := r.db.QueryRow("SELECT id, username, password_hash FROM public.users WHERE username = $1", username)
+
+	var idVal sql.NullString
+	var passwordHashVal sql.NullString
+	var usernameVal sql.NullString
+	err := row.Scan(&idVal, &usernameVal, &passwordHashVal)
 	if err != nil {
 		return models.User{}, fmt.Errorf("error scanning user: %s with error: %w", username, err)
 	}
+	var user models.User
+	user.ID = idVal.String
+	user.Username = usernameVal.String
+	user.PasswordHash = passwordHashVal.String
 	return user, nil
 }
 
@@ -40,7 +47,7 @@ func (r *Repository) CreateUser(username, passwordHash string) (models.User, err
 	if err != nil {
 		return models.User{}, fmt.Errorf("error beginning transaction: %w", err)
 	}
-	stmnt, err := tx.Prepare("INSERT INTO users (username, password_hash) VALUES (?, ?, ?) RETURNING id")
+	stmnt, err := tx.Prepare("INSERT INTO public.users (username, password_hash) VALUES (?, ?) RETURNING id")
 	if err != nil {
 		return models.User{}, fmt.Errorf("error preparing statement: %w", err)
 	}
@@ -63,7 +70,7 @@ func (r *Repository) CreateUser(username, passwordHash string) (models.User, err
 }
 
 func (r *Repository) FindAssetsByUsername(username string) ([]models.Asset, error) {
-	rows, err := r.db.Query("SELECT (asset.id, asset.symbol, asset.amount) FROM users as user LEFT JOIN assets as asset on user.id = asset.user_id  WHERE user.username = ?", username)
+	rows, err := r.db.Query("SELECT user_id ,assets.id, assets.symbol, assets.amount FROM public.users LEFT JOIN public.assets on users.id = assets.user_id  WHERE users.username = $1", username)
 	if err != nil {
 		return nil, fmt.Errorf("error querying assets: %w", err)
 	}
@@ -71,12 +78,19 @@ func (r *Repository) FindAssetsByUsername(username string) ([]models.Asset, erro
 
 	var assets []models.Asset
 	for rows.Next() {
-		var asset models.Asset
-		err = rows.Scan(&asset.ID, &asset.Symbol, &asset.Amount)
+		var id sql.NullString
+		var userID sql.NullString
+		var symbol sql.NullString
+		var amount sql.NullFloat64
+		err = rows.Scan(&userID, &id, &symbol, &amount)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning asset: %w", err)
 		}
-		asset.UserID = username
+		var asset models.Asset
+		asset.ID = id.String
+		asset.UserID = userID.String
+		asset.Symbol = symbol.String
+		asset.Amount = amount.Float64
 		assets = append(assets, asset)
 	}
 

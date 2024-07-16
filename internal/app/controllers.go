@@ -40,6 +40,7 @@ func (a *App) AuthenticateRequest(c *gin.Context) {
 	// authenticate the user
 	ok, err := a.authenticate(username, password)
 	if err != nil {
+		a.logger.Errorf("error authenticating user %q, with username %s", err, username)
 		c.JSON(500, gin.H{"error": "internal server error"})
 		c.Abort()
 		return

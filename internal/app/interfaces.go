@@ -17,7 +17,7 @@ type UserRepository interface {
 }
 type OrderRepository interface {
 	CreateOrder(order models.Order) (models.Order, error)
-	FindByOwnerID(ownerID string) ([]models.Order, error)
+	FindOrderByOwnerID(ownerID string) ([]models.Order, error)
 }
 
 type Logger interface {

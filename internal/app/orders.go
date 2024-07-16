@@ -27,5 +27,5 @@ func (a *App) getOrders(username string) ([]models.Order, error) {
 	if err != nil {
 		return nil, err
 	}
-	return a.orderRepository.FindByOwnerID(user.ID)
+	return a.orderRepository.FindOrderByOwnerID(user.ID)
 }

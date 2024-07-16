@@ -1,15 +1,24 @@
 package order
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/tonydmorris/tranched/internal/models"
+	"github.com/tonydmorris/tranched/pkg/id"
 )
 
-const OrderStatusPending = "pending"
-const OrderStatusfilled = "filled"
-const BuySide = "buy"
-const SellSide = "sell"
+const (
+	OrderStatusPending  = "pending"
+	OrderStatusfilled   = "filled"
+	BuySide             = "buy"
+	SellSide            = "sell"
+	ErrInvalidAssetPair = "invalid asset pair"
+)
+
+var permittedPairs = map[string]bool{
+	"EUR-USD": true,
+}
 
 // ContrivedOrderStorage is a simple in-memory storage for orders
 // storage is keyed by Sybol -> Price -> Quantity -> []Order
@@ -27,14 +36,20 @@ func NewRepository() *Repository {
 	return &Repository{
 		ordersBySymbol: make(contrivedOrderStorageBySymbolPriceQuantity),
 		ordersByUserID: make(contrivedOrderStorageByUserID),
+		idGen:          id.New(),
+		mu:             &sync.RWMutex{},
 	}
 }
 
 func (r *Repository) CreateOrder(order models.Order) (models.Order, error) {
+	_, ok := permittedPairs[order.AssetPair]
+	if !ok {
+		return models.Order{}, errors.New(ErrInvalidAssetPair)
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	order.ID = r.idGen.New()
-	order.Status = "pending"
+	order.Status = OrderStatusPending
 	if _, ok := r.ordersBySymbol[order.AssetPair]; !ok {
 		r.ordersBySymbol[order.AssetPair] = make(map[float64]map[float64][]*models.Order)
 	}
@@ -44,17 +59,16 @@ func (r *Repository) CreateOrder(order models.Order) (models.Order, error) {
 	}
 
 	validOrders := r.ordersBySymbol[order.AssetPair][order.Price][order.Quantity]
-	if len(validOrders) == 0 {
-		r.ordersBySymbol[order.AssetPair][order.Price][order.Quantity] = append(validOrders, &order)
-		return order, nil
-	}
+
+	r.ordersBySymbol[order.AssetPair][order.Price][order.Quantity] = append(validOrders, &order)
 
 	for _, matchingOrder := range validOrders {
 		if matchingOrder.Side == opositeSide(order.Side) {
 			// fill the order
 			matchingOrder.Status = OrderStatusfilled
 			order.Status = OrderStatusfilled
-			return order, nil
+			matchingOrder.FilledBy = order.OwnerID
+			order.FilledBy = matchingOrder.OwnerID
 		}
 	}
 
@@ -64,7 +78,7 @@ func (r *Repository) CreateOrder(order models.Order) (models.Order, error) {
 
 }
 
-func (r *Repository) FindByOwnerID(ownerID string) ([]models.Order, error) {
+func (r *Repository) FindOrderByOwnerID(ownerID string) ([]models.Order, error) {
 
 	var orders []models.Order
 

@@ -12,17 +12,18 @@ services:
       - POSTGRES_USER=app_user
       - POSTGRES_DB=app_db
 
-  # app:
-  #   build:
-  #     context: .
-  #     dockerfile: ./cmd/app/Dockerfile
-  #   restart: always
-  #   ports:
-  #     - 8080:8080
-  #   depends_on:
-  #     - postgres
-  #   environment:
-  #     - POSTGRES_HOST=postgres
-  #     - POSTGRES_PASSWORD=secret
-  #     - POSTGRES_USER=app_user
-  #     - POSTGRES_DB=app_db
+  app:
+    build:
+      context: .
+      dockerfile: ./cmd/app/Dockerfile
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_USER=app_user
+      - POSTGRES_DB=app_db
+      - PORT=8080

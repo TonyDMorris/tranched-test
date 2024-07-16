@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -44,8 +46,9 @@ func (a *App) Route() {
 
 }
 
-func (a *App) Run() error {
-	return a.router.Run()
+func (a *App) Run(port int) error {
+	a.Route()
+	return a.router.Run(fmt.Sprintf(":%d", port))
 }
 
 func WithLogger(logger Logger) func(a *App) {
