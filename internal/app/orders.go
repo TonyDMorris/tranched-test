@@ -12,16 +12,26 @@ import (
 // It creates the order
 // It settles the order if the order is filled
 // Returns the created order
-func (a *App) createOrder(order models.Order) (*models.Order, error) {
+// This shoud be a transaction but for the sake of simplicity we are not using transactions due to in-memory order database and sql user database
+func (a *App) CreateOrder(order models.Order) (*models.Order, error) {
+	// guard clauses
+	if order.Quantity <= 0 {
+		return nil, fmt.Errorf("quantity must be greater than 0")
+	}
+	if order.Price <= 0 {
+		return nil, fmt.Errorf("price must be greater than 0")
+	}
+	// check if the user has enough assets to reserve
 	err := a.commitAssets(order)
 	if err != nil {
 		return nil, fmt.Errorf("error reserving assets: %w", err)
 	}
+	// create the order
 	order, err = a.orderRepository.CreateOrder(order)
 	if err != nil {
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
-
+	// settle the order if it is filled
 	if order.Status == models.OrderStatusfilled {
 		err = a.settle(order)
 		if err != nil {
@@ -31,7 +41,7 @@ func (a *App) createOrder(order models.Order) (*models.Order, error) {
 	return &order, nil
 }
 
-func (a *App) getOrders(username string) ([]models.Order, error) {
+func (a *App) GetOrders(username string) ([]models.Order, error) {
 	user, err := a.userRepository.FindByUsername(username)
 	if err != nil {
 		return nil, err
@@ -62,8 +72,8 @@ func (a *App) commitAssets(order models.Order) error {
 }
 
 func (a *App) settle(order models.Order) error {
-
 	symbols := strings.Split(order.AssetPair, "-")
+
 	var ordererPayout float64
 	var ordererSymbol string
 
@@ -74,10 +84,10 @@ func (a *App) settle(order models.Order) error {
 	case models.SellSide:
 		ordererPayout = order.Quantity
 		ordererSymbol = symbols[1]
-		matchedOrderPayout = order.Quantity * order.Price
+		matchedOrderPayout = order.Quantity / order.Price
 		matchedOrderSymbol = symbols[0]
 	case models.BuySide:
-		ordererPayout = order.Quantity * order.Price
+		ordererPayout = order.Quantity / order.Price
 		ordererSymbol = symbols[0]
 		matchedOrderPayout = order.Quantity
 		matchedOrderSymbol = symbols[1]

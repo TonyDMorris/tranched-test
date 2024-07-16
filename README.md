@@ -20,12 +20,17 @@ contains build speciifc configuration and utility tools
 
 ### commands
 
+run the services with docker-compose from the root of the project
+
+```bash
+docker-compose up --build
+```
+
 check bobs assets
 
 ```curl
 curl --location 'localhost:8080/assets' \
 --header 'Authorization: Basic Ym9iOmx1Y2t5'
-`
 ```
 
 check tracy's assets
@@ -36,6 +41,7 @@ curl --location 'localhost:8080/assets' \
 ```
 
 create an order for bob
+bob wants to spend 1200 USD to buy 1000 EUR
 
 ```curl
 curl --location 'localhost:8080/orders' \
@@ -44,12 +50,20 @@ curl --location 'localhost:8080/orders' \
 --data '{
     "side":"buy",
     "price":1.2,
-    "quantity":1000,
+    "quantity":1200,
     "asset_pair":"EUR-USD"
 }'
 ```
 
+check bobs assets, bob has committed 1200 USD to the order
+
+```curl
+curl --location 'localhost:8080/assets' \
+--header 'Authorization: Basic Ym9iOmx1Y2t5'
+```
+
 create a matching order for tracy with a different side
+tracy wants to sell 1000 EUR to buy 1200 USD
 
 ```curl
 curl --location 'localhost:8080/orders' \
@@ -58,10 +72,24 @@ curl --location 'localhost:8080/orders' \
 --data '{
     "side":"sell",
     "price":1.2,
-    "quantity":1000,
+    "quantity":1200,
     "asset_pair":"EUR-USD"
 }'
 
+```
+
+check tracy's assets, tracy has sold 1000 EUR and gained 1200 USD
+
+```curl
+curl --location 'localhost:8080/assets' \
+--header 'Authorization: Basic dHJhY3k6YmVsbG93'
+```
+
+check bobs assets, bob has been paid 1000 EUR
+
+```curl
+curl --location 'localhost:8080/assets' \
+--header 'Authorization: Basic Ym9iOmx1Y2t5'
 ```
 
 get bobs orders
@@ -77,3 +105,5 @@ get traceys orders
 curl --location 'localhost:8080/orders' \
 --header 'Authorization: Basic dHJhY3k6YmVsbG93'
 ```
+
+orders are now settled and filled.

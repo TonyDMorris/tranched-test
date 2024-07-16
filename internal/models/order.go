@@ -13,12 +13,12 @@ var PermittedPairs = map[string]bool{
 }
 
 type Order struct {
-	ID        string
-	OwnerID   string
-	Side      string
-	Price     float64
-	Quantity  float64
-	AssetPair string
-	Status    string
-	FilledBy  string
+	ID        string  `json:"id"`
+	OwnerID   string  `json:"owner_id"`
+	Side      string  `json:"side"`
+	Price     float64 `json:"price"`
+	Quantity  float64 `json:"quantity"`
+	AssetPair string  `json:"asset_pair"`
+	Status    string  `json:"status"`
+	FilledBy  string  `json:"filled_by"`
 }

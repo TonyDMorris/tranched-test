@@ -38,11 +38,11 @@ func New(ur UserRepository, or OrderRepository, opts ...func(a *App)) *App {
 
 func (a *App) Route() {
 
-	a.router.GET("/orders", a.AuthenticateRequest, a.GetOrders)
-	a.router.POST("/orders", a.AuthenticateRequest, a.CreateOrder)
+	a.router.GET("/orders", a.AuthenticateRequest, a.HandleGetOrders)
+	a.router.POST("/orders", a.AuthenticateRequest, a.HandleCreateOrder)
 
-	a.router.POST("/users", a.CreateUser)
-	a.router.GET("/assets", a.AuthenticateRequest, a.GetUserAssets)
+	a.router.POST("/users", a.HandleCreateUser)
+	a.router.GET("/assets", a.AuthenticateRequest, a.HandleGetUserAssets)
 
 }
 

@@ -39,7 +39,7 @@ func (a *App) AuthenticateRequest(c *gin.Context) {
 	username := split[0]
 	password := split[1]
 	// authenticate the user
-	ok, err := a.authenticate(username, password)
+	ok, err := a.Authenticate(username, password)
 	if err != nil {
 		a.logger.Errorf("error authenticating user %q, with username %s", err, username)
 		c.JSON(500, gin.H{"error": "internal server error"})
@@ -60,7 +60,7 @@ func (a *App) AuthenticateRequest(c *gin.Context) {
 }
 
 // CreateUser creates a new user
-func (a *App) CreateUser(c *gin.Context) {
+func (a *App) HandleCreateUser(c *gin.Context) {
 	var req CreateUserRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -69,7 +69,7 @@ func (a *App) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := a.createUser(req.Username, req.Password)
+	user, err := a.CreateUser(req.Username, req.Password)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "internal server error"})
 		c.Abort()
@@ -80,7 +80,7 @@ func (a *App) CreateUser(c *gin.Context) {
 }
 
 // CreateOrder creates a new order
-func (a *App) CreateOrder(c *gin.Context) {
+func (a *App) HandleCreateOrder(c *gin.Context) {
 	// get the user from the context
 	username, ok := c.Get("username")
 	if !ok {
@@ -97,7 +97,7 @@ func (a *App) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	user, err := a.getUser(username.(string))
+	user, err := a.GetUser(username.(string))
 	if err != nil {
 		c.JSON(500, gin.H{"error": "internal server error"})
 		c.Abort()
@@ -112,7 +112,7 @@ func (a *App) CreateOrder(c *gin.Context) {
 		AssetPair: req.AssetPair,
 	}
 
-	createdOrder, err := a.createOrder(order)
+	createdOrder, err := a.CreateOrder(order)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "internal server error"})
 		c.Abort()
@@ -126,7 +126,7 @@ func (a *App) CreateOrder(c *gin.Context) {
 
 }
 
-func (a *App) GetOrders(c *gin.Context) {
+func (a *App) HandleGetOrders(c *gin.Context) {
 	// get the user from the context
 	username, ok := c.Get("username")
 	if !ok {
@@ -135,7 +135,7 @@ func (a *App) GetOrders(c *gin.Context) {
 		return
 	}
 
-	orders, err := a.getOrders(username.(string))
+	orders, err := a.GetOrders(username.(string))
 	if err != nil {
 		c.JSON(500, gin.H{"error": "internal server error"})
 		c.Abort()
@@ -145,7 +145,7 @@ func (a *App) GetOrders(c *gin.Context) {
 	c.JSON(200, orders)
 }
 
-func (a *App) GetUserAssets(c *gin.Context) {
+func (a *App) HandleGetUserAssets(c *gin.Context) {
 	// get the user from the context
 	username, ok := c.Get("username")
 	if !ok {

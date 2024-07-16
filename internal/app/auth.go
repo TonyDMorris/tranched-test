@@ -5,7 +5,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (a *App) authenticate(username, password string) (bool, error) {
+func (a *App) Authenticate(username, password string) (bool, error) {
 	DBUser, err := a.userRepository.FindByUsername(username)
 	if err != nil {
 		return false, err
@@ -15,7 +15,7 @@ func (a *App) authenticate(username, password string) (bool, error) {
 
 }
 
-func (a *App) createUser(username, password string) (*models.User, error) {
+func (a *App) CreateUser(username, password string) (*models.User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func (a *App) createUser(username, password string) (*models.User, error) {
 	return &user, err
 }
 
-func (a *App) getUser(username string) (*models.User, error) {
+func (a *App) GetUser(username string) (*models.User, error) {
 	user, err := a.userRepository.FindByUsername(username)
 	if err != nil {
 		return nil, err
